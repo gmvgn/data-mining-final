@@ -1,0 +1,6 @@
+{
+	"crime_report_file" : "Crimes_2001_to_present.csv",
+	"crime_report_rows" : false,
+	"crime_iucr_file" : "data/IUCR_codes.csv",
+	"month_dataset" : "exports/day_type_description.csv"
+}
