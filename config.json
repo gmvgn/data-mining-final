@@ -2,5 +2,29 @@
 	"crime_report_file" : "Crimes_2001_to_present.csv",
 	"crime_report_rows" : false,
 	"crime_iucr_file" : "data/IUCR_codes.csv",
-	"month_dataset" : "exports/day_type_description.csv"
+	"month_dataset" : "exports/day_type_description.csv",
+	"jobs" : {
+		"breakout" : false,
+		"community" : false,
+		"multiclass" : false,
+		"correlations" : false,
+		"plot_years" : false,
+		"regression" : false,
+		"regression_type" : false,
+		"outliers" : true
+	},
+	"plot_years_overall" : true,
+	"plot_years_overall_path" : "imgs/total_crime",
+	"plot_years_type" : true,
+	"plot_years_type_path" : "imgs/crime_type",
+	"plot_years_types" : [
+		["ASSAULT", "BATTERY", "CRIM SEXUAL ASSAULT", "HOMICIDE"], 
+		["ROBBERY", "THEFT", "BURGLARY", "MOTOR VEHICLE THEFT"], 
+		["NARCOTICS"]
+	],
+	"outlier_years" : [2001, 2018],
+	"outlier_types" : ["ASSAULT", "BATTERY", "CRIM SEXUAL ASSAULT", "HOMICIDE", "STALKING", "PROSTITUTION"],
+	"outlier_comm" : false,
+	"outlier_deviations" : 3,
+	"outlier_imgs" : "imgs/outliers"
 }

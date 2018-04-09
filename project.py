@@ -23,6 +23,7 @@ from sklearn import linear_model
 
 class DataMineChicago:
     def __init__(self, config):
+        self.config = config
         self.main_dataset = config['crime_report_file']
         self.nrows_main = config['crime_report_rows']
         self.iucr_dataset = config['crime_iucr_file']
@@ -31,6 +32,14 @@ class DataMineChicago:
         self.year_range = list(range(2001, 2019))
         self.index_codes = {}
         self.index_code_names = {}
+
+
+    def save_plt(self, file, legend=True):
+        if (legend):
+            plt.legend()
+        plt.gcf().set_size_inches(10, 5.5)
+        plt.savefig(file)
+        plt.close()
 
 
     def get_main_data_frame(self):
@@ -72,7 +81,8 @@ class DataMineChicago:
         df['IndexCrime'] = 0
         df.loc[df['IUCR'].isin(self.index_codes['I']), 'IndexCrime'] = 1
 
-    def export_time_stats(self):
+    def export_time_stats(self):        
+        print("\nExporting time community stats...")
         self.iucr_crimes()
 
         df_working = self.get_main_data_frame()
@@ -128,22 +138,51 @@ class DataMineChicago:
             del total_df
             del df_selection
 
+        print("\nFinished exports")
+
     def plot_years(self):
         print("\nPlotting years...")
         for year in range(2001, 2019):
             datums = pd.read_csv('exports/day_type_description_{}.csv'.format(year))
-            aggs = datums.groupby(['YearMonthDay']).agg({ 'ID' : 'sum' })
-            aggs_df = aggs.reset_index()
-            aggs_df['YearMonthDay'] = pd.to_datetime(aggs_df['YearMonthDay'])
-            aggs_df.sort_values('YearMonthDay', ascending=True, inplace=True)
-            days = list(range(len(aggs_df)))
-            crimes = aggs_df['ID'].values
-            plt.scatter(days, crimes)
-            plt.title("Scatter Plot of All Crimes ({})".format(year))
-            plt.xlabel("Day (indexed)")
-            plt.ylabel("Number of Crimes")
-            plt.savefig('imgs/all_crimes_{}.png'.format(year))
-            plt.close()
+            if (self.config['plot_years_overall']):
+                img_file = "{}/all_crimes_{}.png".format(self.config['plot_years_overall_path'], year)
+                print("Overall: ", img_file)
+                
+                aggs_df = datums.groupby(['YearMonthDay']).agg({ 
+                    'ID' : 'sum', 
+                    'IndexCrime' : 'sum' 
+                }).reset_index()
+                
+                aggs_df['YearMonthDay'] = pd.to_datetime(aggs_df['YearMonthDay'])
+                aggs_df.sort_values('YearMonthDay', ascending=True, inplace=True)
+                days = list(range(len(aggs_df)))
+
+                plt.scatter(days, aggs_df['ID'].values, label="Total Crime")
+                plt.scatter(days, aggs_df['IndexCrime'].values, label="Index Crime")
+                plt.title("Scatter Plot of Crimes ({})".format(year))
+                plt.xlabel("Day (indexed)")
+                plt.ylabel("Number of Crimes")
+                self.save_plt(img_file)
+            
+            if (self.config['plot_years_type']):
+                print("Year: ", year)
+                for i, group in enumerate(self.config['plot_years_types']):
+                    img_file = "{}/types_{}_{}.png".format(self.config['plot_years_type_path'], year, i)
+                    print("Group: ", img_file)
+                    dic = {'PrimaryType {}'.format(x) : 'sum' for x in group}
+                    aggs_df = datums.groupby(['YearMonthDay']).agg(dic).reset_index()
+                    aggs_df['YearMonthDay'] = pd.to_datetime(aggs_df['YearMonthDay'])
+                    aggs_df.sort_values('YearMonthDay', ascending=True, inplace=True)
+                    aggs_df.columns = ['Date'] + group
+                    days = list(range(len(aggs_df)))
+
+                    for series in group:
+                        plt.scatter(days, aggs_df[series].values, label=series)
+                    plt.title("Scatter Plot of Crime Types ({})".format(year))
+                    plt.xlabel("Day (indexed)")
+                    plt.ylabel("Number of Crimes")
+                    self.save_plt(img_file)
+
         print("Done years")
 
     def add_ah_data(self, df):
@@ -420,8 +459,7 @@ class DataMineChicago:
         plt.title("Regression on All Crimes (2003-2018)")
         plt.xlabel("Day (indexed)")
         plt.ylabel("Number of Crimes")
-        plt.savefig('imgs/all_crimes_regression.png')
-        plt.close()
+        self.save_plt('imgs/all_crimes_regression.png')
 
 
     def regression_type(self):
@@ -452,19 +490,110 @@ class DataMineChicago:
         print("Linear kernel r2: {}".format(r2_score(y_data, y_lin)))
 
 
+    def find_outliers(self):
+        start, end = self.config['outlier_years']
+        types = self.config['outlier_types']
+        devs = self.config['outlier_deviations']
+
+        cross_years_df = pd.DataFrame(data=[], columns=['Date', 'Count', 'Type'])
+
+        for year in range(start, end + 1):
+            print("\n**************************************\nYear: {}\n".format(year))
+            datums = pd.read_csv('exports/day_type_description_{}.csv'.format(year))
+            dic = {'PrimaryType {}'.format(x) : 'sum' for x in types}
+            aggs_df = datums.groupby(['YearMonthDay']).agg(dic).reset_index()
+            aggs_df['YearMonthDay'] = pd.to_datetime(aggs_df['YearMonthDay'])
+            aggs_df.sort_values('YearMonthDay', ascending=True, inplace=True)
+            
+            for t in types:
+                lbl = 'PrimaryType {}'.format(t)
+                col = 'Outlier {}'.format(t)
+                mean = aggs_df[lbl].mean()
+                std = aggs_df[lbl].std()
+                lower = mean - devs * std
+                upper = mean + devs * std
+                aggs_df.loc[:, col] = 0
+                aggs_df.loc[(aggs_df[lbl] > upper), col] = 1 #  | (aggs_df[lbl] < lower)
+                
+                out_slice = aggs_df[aggs_df[col] == 1]
+                if (len(out_slice) == 0):
+                    continue
+
+                print("---------------------------")
+                print("{} outliers: {:.2f} (mean), {:.2f} (std)\n".format(t, mean, std))
+                print("Limit: [{:.2f}, {:.2f}]\n".format(lower, upper))
+                for i, row in out_slice.iterrows():
+                    print("{}: {}".format(row['YearMonthDay'].strftime('%m-%d'), row[lbl]))
+
+                    cross_years_df = cross_years_df.append({
+                        'Date': row['YearMonthDay'],
+                        'Count': row[lbl],
+                        'Type' : t
+                    }, ignore_index=True)
+                print()
+
+
+        print("***************************************")
+        print("Sum of Outliers by Type ({}-{})".format(start, end))
+        print("***************************************")
+
+        cross_years_df.loc[:,'MonthDate'] = pd.to_datetime(cross_years_df['Date']).dt.strftime('%m-%d')
+        cross_years_df.loc[:,'DayOfYear'] = pd.to_datetime(cross_years_df['Date']).dt.dayofyear
+        # List
+        for t in types:
+            out_slice = cross_years_df[cross_years_df['Type'] == t]
+            aggs_df = out_slice.groupby(['MonthDate']).agg({
+                'Count' : 'sum'
+            }).reset_index()
+            aggs_df.sort_values('MonthDate', ascending=True, inplace=True)
+            print()
+            print("Crime type: `{}`".format(t))
+            for i, row in aggs_df.iterrows():
+                print("{}: {}".format(row['MonthDate'], row['Count']))
+        # Plot
+        days = list(range(1, 366))
+        for t in types:
+            out_slice = cross_years_df[cross_years_df['Type'] == t]
+            aggs_df = out_slice.groupby(['DayOfYear']).agg({
+                'Count' : 'sum'
+            }).reset_index()
+            Y = [0] * 365
+            for i, row in aggs_df.iterrows():
+                Y[row['DayOfYear'] - 1] = row['Count']
+            img_file = "{}/outlier_{}.png".format(self.config['outlier_imgs'], t)
+            plt.scatter(days, Y)
+            plt.title("Outliers for `{}` Crimes".format(t))
+            plt.xlabel("Day (indexed)")
+            plt.ylabel("Number of Crimes")
+            self.save_plt(img_file, legend=False)
+
 
     def start(self):
-        # if (os.path.isfile(self.month_dataset) == False):
-        #     print("\nExporting time community stats...")
-        #     self.export_time_stats()
-        #     print("\nFinished exports")
+        print()
+        if (self.config['jobs']['breakout']):
+            self.export_time_stats()
 
-        # self.community_data()
-        # self.multi_class_test()
-        # self.corr_data()
-        # self.plot_years()
-        # self.regression()
-        self.regression_type()
+        if (self.config['jobs']['community']):
+            self.community_data()
+
+        if (self.config['jobs']['multiclass']):
+            self.multi_class_test()
+
+        if (self.config['jobs']['correlations']):
+            self.corr_data()
+
+        if (self.config['jobs']['plot_years']):
+            self.plot_years()
+
+        if (self.config['jobs']['regression']):
+            self.regression()
+
+        if (self.config['jobs']['regression_type']):
+            self.regression_type()
+
+        if (self.config['jobs']['outliers']):
+            self.find_outliers()
+        print()
 
 
 if __name__ == "__main__":
