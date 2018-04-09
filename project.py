@@ -497,6 +497,8 @@ class DataMineChicago:
 
         cross_years_df = pd.DataFrame(data=[], columns=['Date', 'Count', 'Type'])
 
+        print("Using {} deviations for years {}-{}".format(devs, start, end))
+
         for year in range(start, end + 1):
             print("\n**************************************\nYear: {}\n".format(year))
             datums = pd.read_csv('exports/day_type_description_{}.csv'.format(year))
@@ -520,8 +522,7 @@ class DataMineChicago:
                     continue
 
                 print("---------------------------")
-                print("{} outliers: {:.2f} (mean), {:.2f} (std)\n".format(t, mean, std))
-                print("Limit: [{:.2f}, {:.2f}]\n".format(lower, upper))
+                print("{}: [{:.2f}, {:.2f} (mean), {:.2f}] (std = {:.2f})\n".format(t, lower, mean, upper, std))
                 for i, row in out_slice.iterrows():
                     print("{}: {}".format(row['YearMonthDay'].strftime('%m-%d'), row[lbl]))
 
@@ -539,6 +540,7 @@ class DataMineChicago:
 
         cross_years_df.loc[:,'MonthDate'] = pd.to_datetime(cross_years_df['Date']).dt.strftime('%m-%d')
         cross_years_df.loc[:,'DayOfYear'] = pd.to_datetime(cross_years_df['Date']).dt.dayofyear
+       
         # List
         for t in types:
             out_slice = cross_years_df[cross_years_df['Type'] == t]
@@ -550,6 +552,7 @@ class DataMineChicago:
             print("Crime type: `{}`".format(t))
             for i, row in aggs_df.iterrows():
                 print("{}: {}".format(row['MonthDate'], row['Count']))
+        
         # Plot
         days = list(range(1, 366))
         for t in types:

@@ -9,9 +9,9 @@
 		"multiclass" : false,
 		"correlations" : false,
 		"plot_years" : false,
-		"regression" : true,
+		"regression" : false,
 		"regression_type" : false,
-		"outliers" : false
+		"outliers" : true
 	},
 	"plot_years_overall" : true,
 	"plot_years_overall_path" : "imgs/total_crime",
