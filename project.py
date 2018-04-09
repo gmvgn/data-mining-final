@@ -11,6 +11,7 @@ import json
 import os.path
 import glob
 from sklearn.svm import SVR
+from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import r2_score
 from sklearn.multiclass import OneVsRestClassifier
@@ -19,7 +20,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.externals import joblib
 from scipy import stats
-from sklearn import linear_model
 
 class DataMineChicago:
     def __init__(self, config):
@@ -477,21 +477,27 @@ class DataMineChicago:
         slice_cols = ['PrimaryType {}'.format(c) for c in use_types] + ['CommunityArea', 'DayOfYear']
         x_data = df[slice_cols]
         y_data = df['PrimaryType {}'.format(predict_type)]
-        print("Data length: ", len(y_data))
 
-        print("\nRegression...")
+        print("\nRegression on {} rows...".format(len(y_data)))
 
+        print("\nBeginning neural net...")
+        nn = MLPRegressor(hidden_layer_sizes=(200, 100))
+        y_nn = nn.fit(x_data, y_data).predict(x_data)
+        print("Neural network r2: {}".format(r2_score(y_data, y_nn)))
+
+        print("\nBeginning RBF SVR...")
         svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1)
         y_rbf = svr_rbf.fit(x_data, y_data).predict(x_data)
         print("RBF kernel r2: {}".format(r2_score(y_data, y_rbf)))
 
+        print("\nBeginning polynomial SVR...")
         svr_poly = SVR(kernel='poly', C=1e3, degree=2)
         y_poly = svr_poly.fit(x_data, y_data).predict(x_data)
         print("Poly kernel r2: {}".format(r2_score(y_data, y_poly)))
         
-        svr_lin = SVR(kernel='linear', C=1e3)
-        y_lin = svr_lin.fit(x_data, y_data).predict(x_data)
-        print("Linear kernel r2: {}".format(r2_score(y_data, y_lin)))
+        # svr_lin = SVR(kernel='linear', C=1e3)
+        # y_lin = svr_lin.fit(x_data, y_data).predict(x_data)
+        # print("Linear kernel r2: {}".format(r2_score(y_data, y_lin)))
 
 
     def find_outliers(self):

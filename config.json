@@ -10,8 +10,8 @@
 		"correlations" : false,
 		"plot_years" : false,
 		"regression" : false,
-		"regression_type" : false,
-		"outliers" : true
+		"regression_type" : true,
+		"outliers" : false
 	},
 	"plot_years_overall" : true,
 	"plot_years_overall_path" : "imgs/total_crime",
