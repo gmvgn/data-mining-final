@@ -1,0 +1,22 @@
+
+
+Regression method...
+Year: 2003, Length: 27741
+Year: 2004, Length: 55520
+Year: 2005, Length: 83208
+Year: 2006, Length: 110923
+Year: 2007, Length: 138597
+Year: 2008, Length: 166351
+Year: 2009, Length: 193966
+Year: 2010, Length: 221391
+Year: 2011, Length: 248793
+Year: 2012, Length: 276266
+Year: 2013, Length: 303466
+Year: 2014, Length: 330437
+Year: 2015, Length: 357345
+Year: 2016, Length: 384418
+Year: 2017, Length: 411303
+Year: 2018, Length: 414358
+Linear regression: slope = -0.13135216243529307, intercept = 1370.587936443126
+imgs/all_crimes_regression.png
+

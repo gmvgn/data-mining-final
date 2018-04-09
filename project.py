@@ -436,6 +436,7 @@ class DataMineChicago:
 
     def regression(self):
         print("\nRegression method...")
+        img_file = self.config['regression_img']
         df = self.get_year_data(begin=2003)
         aggs = df.groupby(['YearMonthDay']).agg({ 'ID' : 'sum' })
         aggs_df = aggs.reset_index()
@@ -449,6 +450,8 @@ class DataMineChicago:
         slope, intercept, r_value, p_value, std_err = stats.linregress(X, Y)
         y_pred = [slope * x + intercept for x in X]
 
+        print("Linear regression: slope = {}, intercept = {}".format(slope, intercept))
+
         z = np.polyfit(X, Y, 10)
         p = np.poly1d(z)
         y_pred2 = [p(x) for x in X]
@@ -459,7 +462,8 @@ class DataMineChicago:
         plt.title("Regression on All Crimes (2003-2018)")
         plt.xlabel("Day (indexed)")
         plt.ylabel("Number of Crimes")
-        self.save_plt('imgs/all_crimes_regression.png')
+        self.save_plt(img_file)
+        print(img_file)
 
 
     def regression_type(self):
