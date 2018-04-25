@@ -1,7 +1,10 @@
 # CSCI 4502
+# Author: Garrett Glissmann
+# python project.py -f config.json
+
+# Datasets:
 # https://data.cityofchicago.org/Public-Safety/Crimes-2001-to-present/ijzp-q8t2
 # https://data.cityofchicago.org/Public-Safety/Chicago-Police-Department-Illinois-Uniform-Crime-R/c7ck-438e
-# Author: Garrett Glissmann
 
 import argparse
 import pandas as pd
@@ -27,7 +30,7 @@ class DataMineChicago:
         self.main_dataset = config['crime_report_file']
         self.nrows_main = config['crime_report_rows']
         self.iucr_dataset = config['crime_iucr_file']
-        self.month_dataset = config['month_dataset']
+        self.export_dataset = config['export_dataset']
 
         self.year_range = list(range(2001, 2019))
         self.index_codes = {}
@@ -87,7 +90,7 @@ class DataMineChicago:
 
         df_working = self.get_main_data_frame()
         unique_years = df_working['Date'].dt.year.unique()
-        export_file_pre = self.month_dataset.replace('.csv', '')
+        export_file_pre = self.export_dataset.replace('.csv', '')
         print("\nExport files: {}_*.csv, years: {}".format(export_file_pre, unique_years))
         
         print("\nStarting setup...")
@@ -99,18 +102,21 @@ class DataMineChicago:
         df_working[date_col] = df_working['Date'].apply(lambda x : "{}-{}-{}".format(x.year, x.month, x.day) )
 
         # Get distinct column values
-        columns = ['PrimaryType'] # , 'CommunityArea', 'LocationDescription'
-        uniq_col_values = self.one_hot_encode(df_working, columns)
+        columns = self.config['export_columns']
+        df_encode = pd.get_dummies(df_working, columns=columns, prefix=columns, prefix_sep=" ")
 
         aggs = {
             'ID' : 'count',
             'IndexCrime' : 'sum'
         }
 
-        for c in ['PrimaryType']: # , 'LocationDescription'
-            for v in uniq_col_values[c]:
-                key = "{} {}".format(c, v)
-                aggs[key] = 'sum'
+        for c in df_encode.columns:
+            s = c.split(" ")
+            if c[0] in columns:
+                aggs[c] = 'sum'
+
+        print(aggs)
+
         print("Finished setup")
 
         # Select columns
@@ -118,7 +124,7 @@ class DataMineChicago:
 
         # Do by year
         for year in unique_years:
-            df_selection = df_working[df_working['Date'].dt.year == year][selection]
+            df_selection = df_encode[df_encode['Date'].dt.year == year][selection]
             export_file = "{}_{}.csv".format(export_file_pre, year)
 
             print("\nStarting group by and aggregation {}...".format(year))
@@ -504,19 +510,21 @@ class DataMineChicago:
         start, end = self.config['outlier_years']
         types = self.config['outlier_types']
         devs = self.config['outlier_deviations']
+        do_comm = self.config['outlier_community']
 
         cross_years_df = pd.DataFrame(data=[], columns=['Date', 'Count', 'Type'])
 
         print("Using {} deviations for years {}-{}".format(devs, start, end))
 
         for year in range(start, end + 1):
-            print("\n**************************************\nYear: {}\n".format(year))
+            print("\n******************************************************************************************************************\nYear: {}\n".format(year))
             datums = pd.read_csv('exports/day_type_description_{}.csv'.format(year))
             dic = {'PrimaryType {}'.format(x) : 'sum' for x in types}
             aggs_df = datums.groupby(['YearMonthDay']).agg(dic).reset_index()
             aggs_df['YearMonthDay'] = pd.to_datetime(aggs_df['YearMonthDay'])
             aggs_df.sort_values('YearMonthDay', ascending=True, inplace=True)
             
+            # Crime type outliers
             for t in types:
                 lbl = 'PrimaryType {}'.format(t)
                 col = 'Outlier {}'.format(t)
@@ -531,7 +539,7 @@ class DataMineChicago:
                 if (len(out_slice) == 0):
                     continue
 
-                print("---------------------------")
+                print("------------------------------------------------------")
                 print("{}: [{:.2f}, {:.2f} (mean), {:.2f}] (std = {:.2f})\n".format(t, lower, mean, upper, std))
                 for i, row in out_slice.iterrows():
                     print("{}: {}".format(row['YearMonthDay'].strftime('%m-%d'), row[lbl]))
@@ -543,10 +551,32 @@ class DataMineChicago:
                     }, ignore_index=True)
                 print()
 
+            # Index crime outliers
+            if do_comm:
+                df2 = datums.copy()
+                df2['Month'] = pd.to_datetime(df2['YearMonthDay']).dt.month
+                aggs_df2 = df2.groupby(['Month', 'CommunityArea']).agg({
+                    'ID' : 'sum',
+                    'IndexCrime' : 'sum'
+                }).reset_index()
+                aggs_df2.sort_values('Month', ascending=True, inplace=True)
+                print("------------------------------------------------------")
+                print("Index Crime Outliers by Month:\n")
+                for month in aggs_df2.Month.unique():
+                    month_slice = aggs_df2[aggs_df2['Month'] == month]
+                    idx_series = month_slice['IndexCrime']
+                    mean = idx_series.mean()
+                    upper = mean + devs * idx_series.std()
+                    out_slice = month_slice[month_slice['IndexCrime'] >= upper]
+                    if len(out_slice) > 0:
+                        for i, row in out_slice.iterrows():
+                            print("Month {} area {}: {}".format(month, int(row['CommunityArea']), row['IndexCrime']))
+                    print()
 
-        print("***************************************")
+
+        print("*********************************************************************************************************************")
         print("Sum of Outliers by Type ({}-{})".format(start, end))
-        print("***************************************")
+        print("*********************************************************************************************************************")
 
         cross_years_df.loc[:,'MonthDate'] = pd.to_datetime(cross_years_df['Date']).dt.strftime('%m-%d')
         cross_years_df.loc[:,'DayOfYear'] = pd.to_datetime(cross_years_df['Date']).dt.dayofyear
