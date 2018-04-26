@@ -1,5 +1,5 @@
-# data-mining-final
-Project Title: Make Chicago "safe" again
+# Project Title: 
+Make Chicago "safe" again
 
 # Team Members: 
 Luiz Velzte, Ryan Close, Tyler Mooney and Garrett Glissmann
