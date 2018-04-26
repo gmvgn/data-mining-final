@@ -2,7 +2,7 @@
 Make Chicago "safe" again
 
 # Team Members: 
-Luiz Velzte, Ryan Close, Tyler Mooney and Garrett Glissmann
+Luiz Veltze, Ryan Close, Tyler Mooney and Garrett Glissmann
 
 # Project Description: 
 The goal of this project is to find interesting trends using Chicago’s crime reports spanning the years 2001 to early 2018. We will perform a longitudinal survey of crime trends. We hope to find geographical patterns as well as discover connections to other public health factors and socioeconomic indicators. For example, we could correlate crime with birth rates or access to affordable housing and grocery stores.
