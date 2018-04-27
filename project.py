@@ -1,5 +1,4 @@
 # CSCI 4502
-# Author: Garrett Glissmann
 # python project.py -f config.json
 
 # Datasets:
