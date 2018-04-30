@@ -17,6 +17,34 @@ Year: 2015, Length: 357345
 Year: 2016, Length: 384418
 Year: 2017, Length: 411303
 Year: 2018, Length: 414358
+
+HOMICIDE
+imgs/regression/homicide.png
+PrimaryType HOMICIDE
+Linear regression: slope = 7.06587151982343e-05, intercept = 1.1826309226875409
+
+CRIM SEXUAL ASSAULT
+imgs/regression/sex_assault.png
+PrimaryType CRIM SEXUAL ASSAULT
+Linear regression: slope = -8.453036130800697e-05, intercept = 4.227688872377642
+
+THEFT
+imgs/regression/theft.png
+PrimaryType THEFT
+Linear regression: slope = -0.019983900573343594, intercept = 267.05286679597657
+
+BATTERY
+imgs/regression/battery.png
+PrimaryType BATTERY
+Linear regression: slope = -0.0244310438843247, intercept = 249.53582131273038
+
+ASSAULT
+imgs/regression/assault.png
+PrimaryType ASSAULT
+Linear regression: slope = -0.006842199212611093, intercept = 80.37151927437046
+
+All Crimes
+imgs/regression/all_crimes.png
+ID
 Linear regression: slope = -0.13135216243529307, intercept = 1370.587936443126
-imgs/all_crimes_regression.png
 
