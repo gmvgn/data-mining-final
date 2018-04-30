@@ -442,33 +442,47 @@ class DataMineChicago:
     def regression(self):
         print("\nRegression method...")
         img_file = self.config['regression_img']
+        type_files = self.config['regression_type_imgs']
+        sums = { 'ID' : 'sum' }
+        for k in type_files.keys():
+            sums["PrimaryType {}".format(k)] = 'sum'
+
         df = self.get_year_data(begin=2003)
-        aggs = df.groupby(['YearMonthDay']).agg({ 'ID' : 'sum' })
+        aggs = df.groupby(['YearMonthDay']).agg(sums)
         aggs_df = aggs.reset_index()
         aggs_df['YearMonthDay'] = pd.to_datetime(aggs_df['YearMonthDay'])
         df_now = aggs_df.sort_values(by=['YearMonthDay'], ascending=True)
 
-        Y = df_now['ID'].values
-        Y_len = len(Y)
-        X = list(range(Y_len))
+        cols = list(type_files.keys()) + ['ID']
+        for col in cols:
+            img = type_files[col] if col in type_files else img_file
+            label = "All Crimes" if col == "ID" else col
+            col = col if col == "ID" else "PrimaryType {}".format(col)
+            print()
+            print(label)
+            print(img)
+            print(col)
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(X, Y)
-        y_pred = [slope * x + intercept for x in X]
+            Y = df_now[col].values
+            Y_len = len(Y)
+            X = list(range(Y_len))
 
-        print("Linear regression: slope = {}, intercept = {}".format(slope, intercept))
+            slope, intercept, r_value, p_value, std_err = stats.linregress(X, Y)
+            y_pred = [slope * x + intercept for x in X]
 
-        z = np.polyfit(X, Y, 10)
-        p = np.poly1d(z)
-        y_pred2 = [p(x) for x in X]
+            print("Linear regression: slope = {}, intercept = {}".format(slope, intercept))
 
-        plt.plot(X, Y, label="Total Crimes")
-        plt.plot(X, y_pred, label="Linear regression")
-        plt.plot(X, y_pred2, label="Polynomial regression")
-        plt.title("Regression on All Crimes (2003-2018)")
-        plt.xlabel("Day (indexed)")
-        plt.ylabel("Number of Crimes")
-        self.save_plt(img_file)
-        print(img_file)
+            z = np.polyfit(X, Y, 10)
+            p = np.poly1d(z)
+            y_pred2 = [p(x) for x in X]
+
+            plt.plot(X, Y, label=label)
+            plt.plot(X, y_pred, label="Linear regression")
+            plt.plot(X, y_pred2, label="Polynomial regression")
+            plt.title("Regression on {} (2003-2018)".format(label))
+            plt.xlabel("Day (indexed)")
+            plt.ylabel("Number of Crimes")
+            self.save_plt(img)
 
 
     def regression_type(self):

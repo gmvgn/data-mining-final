@@ -10,9 +10,9 @@
 		"multiclass" : false,
 		"correlations" : false,
 		"plot_years" : false,
-		"regression" : false,
+		"regression" : true,
 		"regression_type" : false,
-		"outliers" : true
+		"outliers" : false
 	},
 	"plot_years_overall" : true,
 	"plot_years_overall_path" : "imgs/total_crime",
@@ -28,5 +28,12 @@
 	"outlier_community" : true,
 	"outlier_deviations" : 3,
 	"outlier_imgs" : "imgs/outliers",
-	"regression_img" : "imgs/all_crimes_regression.png"
+	"regression_img" : "imgs/regression/all_crimes.png",
+	"regression_type_imgs" : {
+		"HOMICIDE" : "imgs/regression/homicide.png",
+		"CRIM SEXUAL ASSAULT" : "imgs/regression/sex_assault.png",
+		"THEFT" : "imgs/regression/theft.png",
+		"BATTERY" : "imgs/regression/battery.png",
+		"ASSAULT" : "imgs/regression/assault.png"
+	}
 }
