@@ -46,7 +46,7 @@ The most effective way that we can apply the knowledge that we have found would 
   
   - Because we found links to crime in poverty-stricken neighborhoods we could show our findings to government officials to help them get more funding to assist impoverished people.
 
-# Link to Video:
+# Link to Video: https://youtu.be/AfUFPRgMf14
 
 # Link to Final Report:
 
